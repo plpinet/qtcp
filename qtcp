@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+function ncCheck() {
+  if command -v nc >/dev/null 2>&1; then nc_command="nc"
+  elif command -v ncat >/dev/null 2>&1; then nc_command="ncat"
+  else echo "error: neither 'nc' or 'ncat' is installed."; exit 1
+  fi
+}
+
+function ncHost() {
+  host="${1}"
+  port="${2}"
+  "${nc_command}" -zvw1 "${host}" "${port}" &>/dev/null
+}
+
+function ncOK() {
+  echo -n "*"
+  sleep .5
+}
+
+function ncFail() {
+  echo -n "!"
+}
+
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+
+function ctrl_c() {
+  echo ""
+  echo "CTRL-C detected"
+  exit 0
+}
+
+[ "$#" -lt 2 ] && echo "Usage: ${0} <hostname> <port>" && exit 1
+
+remote_host="${1}"
+remote_port="${2}"
+
+ncCheck
+while true
+do
+  ncHost "${remote_host}" "${remote_port}" && ncOK || ncFail
+done
+
+echo "abnormal exit"
+exit 1
